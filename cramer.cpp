@@ -11,7 +11,7 @@ class Matrix {
             data = new double[n*n]();
         }
         ~Matrix() {  delete[] data; }
-        double& element (int i,int j) { return data[j*n+i]; }
+        double& operator() (int i,int j) { return data[j*n+i]; }
         Matrix eliminate(int i,int j) {
             Matrix r(n-1);
             for (int ii=0;ii<n;ii++)
@@ -20,41 +20,31 @@ class Matrix {
                         continue;
                     int p = (ii<i)?ii:ii-1;
                     int q = (jj<j)?jj:jj-1;
-                    r.element(p,q) = element(ii,jj);
+                    r(p,q) = (*this)(ii,jj);
                 }
             return r;
         }
         double determinant() {
             if (n==1)
-                return element(0,0);
+                return (*this)(0,0);
             double s = 0;
             int i = 0;
-            for(int j=0;j<n;j++){
-                double r = element(i,j)*eliminate(i,j).determinant();
-                if ((i+j)%2==0)
-                    s+=r;
-                else
-                    s-=r;
-            }
+            for(int j=0;j<n;j++)
+                s+= evenodd(i+j)*(*this)(i,j)*eliminate(i,j).determinant();
             return s;
         }
         Matrix inverse() {
             Matrix r(n);
             double det = determinant();
             for (int i=0;i<n;i++)
-                for (int j=0;j<n;j++) {
-                    double p = eliminate(i,j).determinant()/det;
-                    if ((i+j)%2==1)
-                        p = -p;
-                    r.element(j,i) = p;
-                }
+                for (int j=0;j<n;j++) 
+                    r(j,i) = evenodd(i+j)*eliminate(i,j).determinant()/det;
             return r;
         }
         void print() {
             for (int i=0;i<n;i++){
-                for (int j=0;j<n;j++) {
-                    printf("%f\t,",element(i,j));
-                }
+                for (int j=0;j<n;j++)
+                    printf("%f%c\t",(*this)(i,j),j==(n-1)?';':',');
                 printf("\n");
             }
         }
@@ -64,10 +54,16 @@ class Matrix {
                 for (int j=0;j<n;j++){
                     double s=0;
                     for(int k=0;k<n;k++)
-                        s+=element(i,k)*b.element(k,j);
-                    r.element(i,j) = s;
+                        s+=(*this)(i,k)*b(k,j);
+                    r(i,j) = s;
                 }
             return r;
+        }
+        static int evenodd(int p) {
+            if (p%2==0)
+                return 1;
+            else
+                return -1;
         }
 };
 
@@ -77,8 +73,10 @@ int main()
     Matrix mat(n);
     for (int i=0;i<n;i++)
         for (int j=0;j<n;j++)
-            mat.element(i,j) = static_cast <float> (rand()) / static_cast <float> (RAND_MAX);
-    //mat.print();
-    mat.inverse().mult(mat).print();
+            mat(i,j) = static_cast <double> (rand()) / static_cast <double> (RAND_MAX);
+    Matrix inv = mat.inverse();
+    printf("The inverse of Matrix:\n"); mat.print();
+    printf("is:\n"); inv.print();
+    printf("Inverse*Matrix is:\n"); inv.mult(mat).print();
     return 0;
 }
