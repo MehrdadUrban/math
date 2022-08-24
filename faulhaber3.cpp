@@ -79,8 +79,10 @@ class Fraction {
 class Bernoulli {
     private:
         Fraction** bernoulli;
+        int p;
     public:
         Bernoulli(int p,Permute& permute) {
+            this->p = p;
             bernoulli = new Fraction*[p+1];
             for (int n=0;n<=p;n++) {
                 bernoulli[n] = new Fraction(1,1);
@@ -89,6 +91,8 @@ class Bernoulli {
             }
         }
         ~Bernoulli(){
+            for (int n=0;n<=p;n++) 
+                delete bernoulli[n];
             delete[] bernoulli;
         }
         Fraction& operator() (int n) {
